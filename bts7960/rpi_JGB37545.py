@@ -49,8 +49,8 @@ class motor():
         GPIO.add_event_detect(self._HS, GPIO.FALLING, callback = self.got_hs_pulse) 
 
         # setting PWM output settings
-        self._motor_pwm_l = GPIO.PWM(self._L_PWM, 100)
-        self._motor_pwm_r = GPIO.PWM(self._R_PWM, 100)
+        self._motor_pwm_l = GPIO.PWM(self._L_PWM, 10000)
+        self._motor_pwm_r = GPIO.PWM(self._R_PWM, 10000)
         
         # start duty cycle
         self._motor_pwm_l.start(0)
