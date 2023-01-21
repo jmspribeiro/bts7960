@@ -80,28 +80,27 @@ class motor():
             self.stop()
 
     def stop(self):
-        self.lock.acquire()
-        self._stop_run = True
-        GPIO.remove_event_detect(self._HS)
-        self._timer.cancel()
-        self.lock.release()        
+        with self.lock:
+            self._stop_run = True
+            GPIO.remove_event_detect(self._HS)
+            self._timer.cancel()
+                    
         GPIO.output(self._L_EN, False)
         GPIO.output(self._R_EN, False)
         GPIO.cleanup()        
         
 
     def _update_clock(self):
-        self.lock.acquire()
-        if self._stop_run:
-            self.lock.release()
-            return
-        # timeout without readings
-        if self._sensor_timer > 0:
-            self._sensor_timer = self._sensor_timer - 1
-        else:
-            self.motor_speed = 0.0
-        #print(f"Motor speed: {self.motor_speed} wheel_speed: {self.wheel_speed} wheel_distance: {self.wheel_distance}")
-        self.lock.release()
+        with self.lock:
+            if self._stop_run:
+                self.lock.release()
+                return
+            # timeout without readings
+            if self._sensor_timer > 0:
+                self._sensor_timer = self._sensor_timer - 1
+            else:
+                self.motor_speed = 0.0
+            #print(f"Motor speed: {self.motor_speed} wheel_speed: {self.wheel_speed} wheel_distance: {self.wheel_distance}")
 
         self._timer = Timer(0.1, self._update_clock)
         self._timer.start()
@@ -128,13 +127,12 @@ class motor():
         if self._dynamicMovingAverageCount < MAX_COUNT_MOVING_AVERAGE:
             self._dynamicMovingAverageCount = self._dynamicMovingAverageCount + 1
         
-        self.lock.acquire()
-        self._sensor_timer = MAX_COUNT_MOVING_AVERAGE # use MAX_COUNT as number of timeout samples
-        self.motor_speed = speed * 60 / (18.8*16)  # rpm  - 18.8:1 gearbox ratio, 16 PPR hall sensor 
-        self.wheel_speed = (self.motor_speed / 60) * self._WHEEL_CIRCUMFERENCE # m/s
-        self.wheel_distance += self.wheel_speed * deltaTime # meters
-        self.lock.release()
-
+        with self.lock:
+            self._sensor_timer = MAX_COUNT_MOVING_AVERAGE # use MAX_COUNT as number of timeout samples
+            self.motor_speed = speed * 60 / (18.8*16)  # rpm  - 18.8:1 gearbox ratio, 16 PPR hall sensor 
+            self.wheel_speed = (self.motor_speed / 60) * self._WHEEL_CIRCUMFERENCE # m/s
+            self.wheel_distance += self.wheel_speed * deltaTime # meters
+        
 
     def _set_motor_mode(self, mode: str):
       if mode == "reverse":
