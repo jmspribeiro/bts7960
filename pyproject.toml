@@ -1,6 +1,6 @@
 [project]
 name = "rpi-gpio-bts7960-jmspribeiro"
-version = "0.0.1"
+version = "0.0.3"
 authors = [
   { name="Jorge Pais Ribeiro", email="jorgeeribeiro@gmail.com" },
 ]
@@ -12,6 +12,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
+]
+dependencies = [
+    "RPi.GPIO >= 0.7.1",
+    "readchar",
 ]
 
 [project.urls]

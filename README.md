@@ -1,6 +1,12 @@
 # BTS7960 Python package
 Python library to control the BTS7960 Dual H-Bridge using the rapsberry pi.
 
+## setup
+```
+sudo apt install rpi.gpio-common python3-pigpio python3-gpiozero python3-rpi.gpio.
+pip install readchar RPi.GPIO
+```
+
 ## Usage
 ### Import 
 ```

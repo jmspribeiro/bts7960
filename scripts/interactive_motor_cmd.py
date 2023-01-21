@@ -15,22 +15,13 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys, tty, termios, os, readchar
-from bts7960 import rpi_JGB37545 
-
-curr_power = 0
-mt = rpi_JGB37545.motor(hall_sensor=17, 
-           bts_L_EN=13, 
-           bts_R_EN=19, 
-           bts_L_PWM=6, 
-           bts_R_PWM=12, 
-           wheel_diameter = 0.1)
-
+from bts7960 import rpi_JGB37545
 
 def getch():
    ch = readchar.readchar()
    return ch
 
-def printscreen():
+def printscreen(mt, curr_power):
    os.system('clear')
    print("========== Status ==========")
    print("Current power:  ", curr_power)
@@ -43,34 +34,57 @@ def printscreen():
    print("x: Stop Motor")
    print("q: Quit")
 
-mt.set_motor_power(curr_power)
-printscreen()
-      
-while True:
-   char = getch()
-
-   if (char == "a"):
-      curr_power = curr_power + 0.1
-      if curr_power > 1:
-         curr_power = 1
-
-   if (char == "s"):
-      curr_power = curr_power - 0.1
-      if curr_power < -1:
-         curr_power = -1
+def main():
+   curr_power = 0
+   
+   mt = rpi_JGB37545.motor(hall_sensor=12, 
+            bts_L_EN=27, 
+            bts_R_EN=13, 
+            bts_L_PWM=6, 
+            bts_R_PWM=5, 
+            wheel_diameter = 0.1)
+   
+   """mt = rpi_JGB37545.motor(hall_sensor=20, 
+            bts_L_EN=27, 
+            bts_R_EN=16, 
+            bts_L_PWM=26, 
+            bts_R_PWM=19, 
+            wheel_diameter = 0.1)
+   """      
+   mt.set_motor_power(curr_power)
+   printscreen(mt, curr_power)
          
-   if (char == "x"):
-      curr_power = 0
+   while True:
+      char = getch()
 
-   if (char == "g"):
-      mt.get_motor_speed()
+      if (char == "a"):
+         curr_power = curr_power + 0.1
+         if curr_power > 1:
+            curr_power = 1
 
-   if (char == "q"):
-      mt.stop()
-      print("Program Terminated")
-      break
-   elif (char != ""):
-      mt.set_motor_power(curr_power)
-      printscreen()
-      
-   char = ""
+      if (char == "s"):
+         curr_power = curr_power - 0.1
+         if curr_power < -1:
+            curr_power = -1
+            
+      if (char == "x"):
+         curr_power = 0
+
+      if (char == "g"):
+         mt.get_motor_speed()
+
+      if (char == "q"):
+         mt.stop()
+         print("Program Terminated")
+         break
+      elif (char != ""):
+         mt.set_motor_power(curr_power)
+         printscreen(mt, curr_power)
+         
+      char = ""
+
+   del mt
+   return 0
+
+if __name__ == '__main__':
+    sys.exit(main())  # next section explains the use of sys.exit

@@ -67,19 +67,34 @@ class motor():
         self._sensor_timer = 0
         self._dynamic_moving_average = [0] * ( MAX_COUNT_MOVING_AVERAGE + 1 )
         self._dynamicMovingAverageCount = 0 
+        
+        self._stop_run = False
         self.lock = Lock()
         #self._set_motor_mode("forward")
+        
+        # initialize timer for timeouting hall sensor readings
         self._update_clock()
 
+    def __del__(self):
+        if not self._stop_run:
+            self.stop()
+
     def stop(self):
+        self.lock.acquire()
+        self._stop_run = True
+        GPIO.remove_event_detect(self._HS)
         self._timer.cancel()
+        self.lock.release()        
         GPIO.output(self._L_EN, False)
         GPIO.output(self._R_EN, False)
-        GPIO.cleanup()
-        print("GPIO cleaned")
+        GPIO.cleanup()        
+        
 
     def _update_clock(self):
         self.lock.acquire()
+        if self._stop_run:
+            self.lock.release()
+            return
         # timeout without readings
         if self._sensor_timer > 0:
             self._sensor_timer = self._sensor_timer - 1
@@ -98,8 +113,6 @@ class motor():
         :param channel: channel descriptions 
         :return: none
         """ 
-        self.lock.acquire()
-        self._sensor_timer = MAX_COUNT_MOVING_AVERAGE # use MAX_COUNT as number of timeout samples
         ctime = time.time()
         self._dynamic_moving_average[MAX_COUNT_MOVING_AVERAGE] = ctime
         deltaTime = ctime - self._dynamic_moving_average[MAX_COUNT_MOVING_AVERAGE - self._dynamicMovingAverageCount]
@@ -114,7 +127,9 @@ class motor():
 
         if self._dynamicMovingAverageCount < MAX_COUNT_MOVING_AVERAGE:
             self._dynamicMovingAverageCount = self._dynamicMovingAverageCount + 1
-
+        
+        self.lock.acquire()
+        self._sensor_timer = MAX_COUNT_MOVING_AVERAGE # use MAX_COUNT as number of timeout samples
         self.motor_speed = speed * 60 / (18.8*16)  # rpm  - 18.8:1 gearbox ratio, 16 PPR hall sensor 
         self.wheel_speed = (self.motor_speed / 60) * self._WHEEL_CIRCUMFERENCE # m/s
         self.wheel_distance += self.wheel_speed * deltaTime # meters
@@ -134,11 +149,11 @@ class motor():
          GPIO.output(self._L_EN, False)
          GPIO.output(self._R_EN, False)
 
-    def set_motor_power(self, power: int):
+    def set_motor_power(self, power: float):
         """
         set_motor_power sets the motor power
 
-        :param power: int from -1 to 1
+        :param power: float from -1.0 to 1.0
         :return: none
         """ 
         if power < 0:
